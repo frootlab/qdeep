@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """nemoa gui."""
 
-__version__     = '0.1.0'
+__version__     = '0.1.1'
 __status__      = 'Development'
 __description__ = 'Deep data analysis and visualization'
 __url__         = 'https://github.com/fishroot/nemoa-gui'
