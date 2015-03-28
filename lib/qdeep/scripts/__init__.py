@@ -5,8 +5,8 @@ __author__  = 'Patrick Michl'
 __email__   = 'patrick.michl@gmail.com'
 __license__ = 'GPLv3'
 
-
 import nemoa
+import qdeep
 from PySide import QtGui, QtCore
 import sys
 
@@ -21,10 +21,14 @@ class MainWindow(QtGui.QMainWindow):
 
         # setup MDI area
         self.mdiArea = QtGui.QMdiArea()
-        self.mdiArea.setHorizontalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAsNeeded)
-        self.mdiArea.setVerticalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAsNeeded)
+        #self.mdiArea.setHorizontalScrollBarPolicy(
+            #QtCore.Qt.ScrollBarAsNeeded)
+        #self.mdiArea.setVerticalScrollBarPolicy(
+            #QtCore.Qt.ScrollBarAsNeeded)
+        self.mdiArea.setViewMode(QtGui.QMdiArea.TabbedView)
+        self.mdiArea.setTabsClosable(True)
+        self.mdiArea.setTabsMovable(True)
+        #self.mdiArea.setObjectName( "mdiArea" )
         self.setCentralWidget(self.mdiArea)
 
         self.createActions()
@@ -45,15 +49,9 @@ class MainWindow(QtGui.QMainWindow):
         acredits = '</i>, <i>'.join(nemoa.about('credits'))
         alicense = nemoa.about('license')
 
-        #import urlparse
-        #import urllib
-        #lfile = self.getPath('logo', 'nemoa-logo-small.png')
-        #luri = urlparse.urljoin('file:', urllib.pathname2url(lfile))
-        #print luri
-
         msgText = (
             "<h1>nemoa</h1>"
-            "<b>version</b> %s<br>",
+            "<b>version</b> %s<br>"
             "<i>%s</i>"
             "<h3>Copyright</h3>"
             "%s <a href = 'mailto:%s'>&lt;%s&gt;</a>"
@@ -66,17 +64,9 @@ class MainWindow(QtGui.QMainWindow):
             "<i>%s</i>"
             "<h3>Third Party Credits</h3>"
             "<a href='https://www.archlinux.org/packages/extra/any/"
-            "oxygen-icons/'>Oxygen icon set</a>, license: LGPL" % (
+            "oxygen-icons/'>Oxygen icon set</a> license: LGPL" % (
             aversion, adesc, acopyright, amail,
             amail, alicense, acredits))
-
-        #msgStyle = (
-            #"QMessageBox { background-image: url(%s); }")
-        #msgStyle = (
-            #"QMessageBox QPushButton {color: white;}")
-
-        #msgBox = QtGui.QMessageBox()
-        #msgBox.setStyleSheet(msgStyle)
 
         aboutBox = QtGui.QMessageBox.about(self, "About Nemoa", msgText)
 
@@ -94,48 +84,48 @@ class MainWindow(QtGui.QMainWindow):
 
     def createActions(self):
         self.actNewProject = QtGui.QAction(
-            self.getIcon('actions', 'window-new.png'),
+            qdeep.common.getIcon('actions', 'window-new.png'),
             "&New Project", self,
             shortcut = "Ctrl+N",
             statusTip = "Create a new workspace",
             triggered = self.newWorkspace)
         self.actOpenProject = QtGui.QAction(
-            self.getIcon('actions', 'project-open.png'),
+            qdeep.common.getIcon('actions', 'project-open.png'),
             '&Open Poject', self,
             shortcut = "Ctrl+O",
             statusTip = "Open an existing project",
             triggered = self.openWorkspace)
         self.actSaveProject = QtGui.QAction(
-            self.getIcon('actions', 'document-save-all.png'),
+            qdeep.common.getIcon('actions', 'document-save-all.png'),
             '&Save Project', self,
             shortcut = "Ctrl+S",
             statusTip = "Save current workspace to disk",
             triggered = self.saveWorkspace)
         self.actCloseProject = QtGui.QAction(
-            self.getIcon('actions', 'project-development-close.png'),
+            qdeep.common.getIcon('actions', 'project-development-close.png'),
             "Close Project", self,
             shortcut = "Ctrl+W",
             statusTip = "Close current project",
             triggered = self.closeWorkspace)
         self.actSaveAsFile = QtGui.QAction(
-            self.getIcon('actions', 'document-save-as.png'),
+            qdeep.common.getIcon('actions', 'document-save-as.png'),
             'Save as...', self,
             statusTip = "Save current workspace in new directory",
             triggered = self.saveWorkspaceAs)
         self.actPrintFile = QtGui.QAction(
-            self.getIcon('actions', 'document-print.png'),
+            qdeep.common.getIcon('actions', 'document-print.png'),
             "&Print", self,
             shortcut = QtGui.QKeySequence.Print,
             statusTip = "Print the document",
             triggered = self.printFile)
         self.actExit = QtGui.QAction(
-            self.getIcon('actions', 'window-close.png'),
+            qdeep.common.getIcon('actions', 'window-close.png'),
             "Exit", self,
             shortcut = "Ctrl+Q",
             statusTip = "Exit the application",
             triggered = self.close)
         self.actAbout = QtGui.QAction(
-            self.getIcon('actions', 'help-about.png'),
+            qdeep.common.getIcon('actions', 'help-about.png'),
             "About", self,
             statusTip = "About nemoa",
             triggered = self.about)
@@ -242,19 +232,19 @@ class MainWindow(QtGui.QMainWindow):
     def createMdiChild(self, type):
 
         if type == ('script', 'editor'):
-            from nemoagui.objects.script import Editor
+            from qdeep.objects.script import Editor
             child = Editor()
         elif type == ('dataset', 'editor'):
-            from nemoagui.objects.dataset import Editor
+            from qdeep.objects.dataset import Editor
             child = Editor()
         elif type == ('model', 'editor'):
-            from nemoagui.objects.model import Editor
+            from qdeep.objects.model import Editor
             child = Editor()
         elif type == ('network', 'editor'):
-            from nemoagui.objects.network import Editor
+            from qdeep.objects.network import Editor
             child = Editor()
         elif type == ('system', 'editor'):
-            from nemoagui.objects.system import Editor
+            from qdeep.objects.system import Editor
             child = Editor()
         else:
             return None
@@ -331,7 +321,7 @@ class MainWindow(QtGui.QMainWindow):
             if not objList: continue
             objTypeItem = QtGui.QTreeWidgetItem(self.treeWidget,
                 [objType.title() + 's', None, None])
-            objTypeIcon = self.getIcon(*objIconPath)
+            objTypeIcon = qdeep.common.getIcon(*objIconPath)
             objTypeItem.setIcon(0, objTypeIcon)
             for objName in objList:
                 objItem = QtGui.QTreeWidgetItem(objTypeItem,
@@ -383,32 +373,6 @@ class MainWindow(QtGui.QMainWindow):
             if window.widget().currentFile() == canonicalFilePath:
                 return window
         return None
-
-    def getPath(self, key, *args):
-
-        import os
-
-        if not self.settings:
-            self.settings = {}
-
-        if key == 'icons':
-            if not self.settings.get('icons', None):
-                self.settings['icons'] = nemoa.path('expand',
-                    ('%site_data_dir%', 'images', 'icons'))
-            base = self.settings['icons']
-        elif key == 'logo':
-            if not self.settings.get('logo', None):
-                self.settings['logo'] = nemoa.path('expand',
-                    ('%site_data_dir%', 'images', 'logo'))
-            base = self.settings['logo']
-
-        return os.path.sep.join([base] + list(args))
-
-    def getIcon(self, *args):
-        return QtGui.QIcon(self.getPath('icons', *args))
-
-    def getLogo(self, *args):
-        return QtGui.QIcon(self.getPath('logo', *args))
 
     def printFile(self):
         return True

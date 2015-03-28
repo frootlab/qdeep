@@ -4,7 +4,7 @@ __author__  = 'Patrick Michl'
 __email__   = 'patrick.michl@gmail.com'
 __license__ = 'GPLv3'
 
-import nemoagui.objects.common
+import qdeep.objects.common
 
-class Editor(nemoagui.objects.common.Editor):
+class Editor(qdeep.objects.common.Editor):
     pass

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """nemoa gui."""
 
-__version__     = '0.1.1'
+__version__     = '0.1.2'
 __status__      = 'Development'
 __description__ = 'Deep data analysis and visualization'
 __url__         = 'https://github.com/fishroot/nemoa-gui'
@@ -12,8 +12,9 @@ __email__       = 'patrick.michl@gmail.com'
 __maintainer__  = 'Patrick Michl'
 __credits__     = ['Rebecca Krauss', 'Sebastian Michl']
 
-import nemoagui.scripts
+import qdeep.common
+import qdeep.scripts
 
 def start(*args, **kwargs):
     """Start nemoa gui."""
-    return nemoagui.scripts.main()
+    return qdeep.scripts.main()

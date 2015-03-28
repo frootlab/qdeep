@@ -5,10 +5,10 @@ __email__   = 'patrick.michl@gmail.com'
 __license__ = 'GPLv3'
 
 import nemoa
-import nemoagui.objects.common
+import qdeep.objects.common
 from PySide import QtGui, QtCore, QtSql
 
-class Editor(nemoagui.objects.common.Editor):
+class Editor(qdeep.objects.common.Editor):
 
     def loadFile(self, fileName):
 

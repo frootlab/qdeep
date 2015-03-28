@@ -75,7 +75,7 @@ def install():
         return variables
 
     pkg = {
-        'name': 'nemoagui',
+        'name': 'qdeep',
         'descfile': 'DESCRIPTION.rst',
         'libdir': 'lib',
         'keywords': 'nemoa dataanalysis classification dbn rbm',
@@ -95,7 +95,7 @@ def install():
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4' ],
         'entry_points': {
-            'gui_scripts' : ['nemoagui = nemoagui.scripts:main']}
+            'gui_scripts' : ['qdeep = qdeep.scripts:main']}
         }
 
     # prepare dynamic package variables

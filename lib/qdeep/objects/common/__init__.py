@@ -5,16 +5,30 @@ __email__   = 'patrick.michl@gmail.com'
 __license__ = 'GPLv3'
 
 import nemoa
+import qdeep
 from PySide import QtGui, QtCore
 
-class Editor(QtGui.QTextEdit):
+class Editor(QtGui.QMainWindow):
     sequenceNumber = 1
 
     def __init__(self):
         super(Editor, self).__init__()
 
+        self.textArea = QtGui.QTextEdit()
+        self.textArea.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAsNeeded)
+        self.textArea.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAsNeeded)
+        self.setCentralWidget(self.textArea)
+
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.isUntitled = True
+
+        self.createActions()
+        self.createMenus()
+
+    def createActions(self): pass
+    def createMenus(self): pass
 
     def newFile(self):
         self.isUntitled = True
@@ -22,7 +36,8 @@ class Editor(QtGui.QTextEdit):
         MdiChild.sequenceNumber += 1
         self.setWindowTitle(self.curFile + '[*]')
 
-        self.document().contentsChanged.connect(self.documentWasModified)
+        self.textArea.document().contentsChanged.connect(
+            self.documentWasModified)
 
     def loadFile(self, fileName):
         file = QtCore.QFile(fileName)
@@ -34,12 +49,12 @@ class Editor(QtGui.QTextEdit):
 
         instr = QtCore.QTextStream(file)
         QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.setPlainText(instr.readAll())
+        self.textArea.setPlainText(instr.readAll())
         QtGui.QApplication.restoreOverrideCursor()
 
         self.setCurrentFile(fileName)
 
-        self.document().contentsChanged.connect(
+        self.textArea.document().contentsChanged.connect(
             self.documentWasModified)
 
         return True
@@ -63,12 +78,13 @@ class Editor(QtGui.QTextEdit):
 
         if not file.open(QtCore.QFile.WriteOnly | QtCore.QFile.Text):
             QtGui.QMessageBox.warning(self, "MDI",
-                    "Cannot write file %s:\n%s." % (fileName, file.errorString()))
+                "Cannot write file %s:\n%s." % (fileName,
+                file.errorString()))
             return False
 
         outstr = QtCore.QTextStream(file)
         QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        outstr << self.toPlainText()
+        outstr << self.textArea.toPlainText()
         QtGui.QApplication.restoreOverrideCursor()
 
         self.setCurrentFile(fileName)
@@ -87,15 +103,15 @@ class Editor(QtGui.QTextEdit):
             event.ignore()
 
     def documentWasModified(self):
-        self.setWindowModified(self.document().isModified())
+        self.setWindowModified(self.textArea.document().isModified())
 
     def maybeSave(self):
-        if self.document().isModified():
+        if self.textArea.document().isModified():
             ret = QtGui.QMessageBox.warning(self, "MDI",
-                    "'%s' has been modified.\nDo you want to save your "
-                    "changes?" % self.userFriendlyCurrentFile(),
-                    QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard |
-                    QtGui.QMessageBox.Cancel)
+                "'%s' has been modified.\nDo you want to save your "
+                "changes?" % self.userFriendlyCurrentFile(),
+                QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard |
+                QtGui.QMessageBox.Cancel)
             if ret == QtGui.QMessageBox.Save:
                 return self.save()
             elif ret == QtGui.QMessageBox.Cancel:
@@ -106,7 +122,7 @@ class Editor(QtGui.QTextEdit):
     def setCurrentFile(self, fileName):
         self.curFile = QtCore.QFileInfo(fileName).canonicalFilePath()
         self.isUntitled = False
-        self.document().setModified(False)
+        self.textArea.document().setModified(False)
         self.setWindowModified(False)
         self.setWindowTitle(self.userFriendlyCurrentFile() + "[*]")
 
