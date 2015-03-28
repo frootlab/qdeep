@@ -94,7 +94,9 @@ def install():
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4' ],
-        'entry_points': {}}
+        'entry_points': {
+            'gui_scripts' : ['nemoagui = nemoagui.scripts:main']}
+        }
 
     # prepare dynamic package variables
     srcfile = (pkg['libdir'], pkg['name'], '__init__.py')
@@ -122,11 +124,49 @@ def install():
         extras_require   = pkg['extras_require'],
         entry_points     = pkg['entry_points'],
         cmdclass         = pkg['cmdclass'],
-        zip_safe         = False )
+        zip_safe         = True,
+        include_package_data = True )
 
 def postinstall():
     """Post installation script."""
-    pass
+
+    import appdirs
+
+    def copytree(src, tgt):
+
+        import glob
+        import os
+        import shutil
+
+        print('copying %s -> %s' % (src, tgt))
+
+        for srcsdir in glob.glob(os.path.join(src, '*')):
+            tgtsdir = os.path.join(tgt, os.path.basename(srcsdir))
+
+            if os.path.exists(tgtsdir):
+                shutil.rmtree(tgtsdir)
+
+            try:
+                shutil.copytree(srcsdir, tgtsdir)
+
+            # directories are the same
+            except shutil.Error as e:
+                print('directory not copied. Error: %s' % e)
+
+            # any error saying that the directory doesn't exist
+            except OSError as e:
+                print('directory not copied. Error: %s' % e)
+
+        return True
+
+    print('running postinstall')
+
+    # copy application data
+    site_src_base = getpath('data')
+    site_tgt_base = appdirs.site_data_dir(
+        appname = 'nemoa', appauthor = 'Froot')
+    site_tgt_base = getpath(site_tgt_base)
+    copytree(site_src_base, site_tgt_base)
 
 if __name__ == '__main__':
 
