@@ -10,9 +10,14 @@ from PySide import QtGui, QtCore
 
 class Editor(QtGui.QMainWindow):
     sequenceNumber = 1
+    settings = None
+    instance = None
+    objType = None
 
     def __init__(self):
         super(Editor, self).__init__()
+
+        self.settings = {}
 
         self.textArea = QtGui.QTextEdit()
         self.textArea.setHorizontalScrollBarPolicy(
@@ -32,12 +37,49 @@ class Editor(QtGui.QMainWindow):
 
     def newFile(self):
         self.isUntitled = True
-        self.curFile = "script%d.py" % MdiChild.sequenceNumber
-        MdiChild.sequenceNumber += 1
-        self.setWindowTitle(self.curFile + '[*]')
+        self.objPath = "script%d.py" % self.sequenceNumber
+        self.sequenceNumber += 1
+        self.setWindowTitle(self.objPath + '[*]')
 
         self.textArea.document().contentsChanged.connect(
             self.documentWasModified)
+
+    def openFromWorkspace(self, objName):
+
+        objPath = nemoa.path(self.objType, objName)
+        if not objPath: return False
+
+        retVal = True
+        if self.objType == 'model':
+            instance = nemoa.model.open(objName)
+        elif self.objType == 'dataset':
+            instance = nemoa.dataset.open(objName)
+        elif self.objType == 'network':
+            instance = nemoa.network.open(objName)
+        elif self.objType == 'system':
+            instance = nemoa.system.open(objName)
+        elif self.objType == 'script':
+            retVal &= self.loadFile(objPath)
+            instance = None
+        else:
+            retVal = False
+        if not retVal: return False
+
+        self.objName = objName
+        self.objPath = objPath
+        self.objInstance = instance
+        return True
+
+    def getType(self):
+        return self.objType
+
+    def getName(self):
+        return self.objInstance.name \
+            if self.objInstance else self.objName
+
+    def getPath(self):
+        return self.objInstance.path \
+            if self.objInstance else self.objPath
 
     def loadFile(self, fileName):
         file = QtCore.QFile(fileName)
@@ -63,11 +105,11 @@ class Editor(QtGui.QMainWindow):
         if self.isUntitled:
             return self.saveAs()
         else:
-            return self.saveFile(self.curFile)
+            return self.saveFile(self.objPath)
 
     def saveAs(self):
         fileName, filtr = QtGui.QFileDialog.getSaveFileName(
-            self, "Save As", self.curFile)
+            self, "Save As", self.objPath)
         if not fileName:
             return False
 
@@ -91,10 +133,7 @@ class Editor(QtGui.QMainWindow):
         return True
 
     def userFriendlyCurrentFile(self):
-        return self.strippedName(self.curFile)
-
-    def currentFile(self):
-        return self.curFile
+        return self.strippedName(self.objPath)
 
     def closeEvent(self, event):
         if self.maybeSave():
@@ -120,7 +159,7 @@ class Editor(QtGui.QMainWindow):
         return True
 
     def setCurrentFile(self, fileName):
-        self.curFile = QtCore.QFileInfo(fileName).canonicalFilePath()
+        self.objPath = QtCore.QFileInfo(fileName).canonicalFilePath()
         self.isUntitled = False
         self.textArea.document().setModified(False)
         self.setWindowModified(False)

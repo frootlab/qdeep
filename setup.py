@@ -81,7 +81,8 @@ def install():
         'keywords': 'nemoa dataanalysis classification dbn rbm',
         'install_requires': [
             'nemoa',
-            'pyside'],
+            'pyside',
+            'pyqtgraph'],
         'extras_require': {},
         'classifiers': [
             'Development Status :: 3 - Alpha',
@@ -95,7 +96,7 @@ def install():
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4' ],
         'entry_points': {
-            'gui_scripts' : ['qdeep = qdeep.scripts:main']}
+            'gui_scripts' : ['qdeep = qdeep:main']}
         }
 
     # prepare dynamic package variables

@@ -7,4 +7,4 @@ __license__ = 'GPLv3'
 import qdeep.objects.common
 
 class Editor(qdeep.objects.common.Editor):
-    pass
+    objType = 'model'
