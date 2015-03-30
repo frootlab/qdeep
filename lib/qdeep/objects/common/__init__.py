@@ -11,29 +11,30 @@ from PySide import QtGui, QtCore
 class Editor(QtGui.QMainWindow):
     sequenceNumber = 1
     settings = None
-    instance = None
+    isUntitled = True
+
+    objInstance = None
+    objName = None
     objType = None
+    objPath = None
 
     def __init__(self):
         super(Editor, self).__init__()
 
         self.settings = {}
 
-        self.textArea = QtGui.QTextEdit()
-        self.textArea.setHorizontalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAsNeeded)
-        self.textArea.setVerticalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAsNeeded)
-        self.setCentralWidget(self.textArea)
-
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.isUntitled = True
 
+        self.updateWindowTitle()
+
         self.createActions()
-        self.createMenus()
+        self.createToolBars()
+        self.createCentralWidget()
 
     def createActions(self): pass
-    def createMenus(self): pass
+    def createToolBars(self): pass
+    def createCentralWidget(self): pass
 
     def newFile(self):
         self.isUntitled = True
@@ -41,33 +42,33 @@ class Editor(QtGui.QMainWindow):
         self.sequenceNumber += 1
         self.setWindowTitle(self.objPath + '[*]')
 
-        self.textArea.document().contentsChanged.connect(
-            self.documentWasModified)
-
     def openFromWorkspace(self, objName):
 
         objPath = nemoa.path(self.objType, objName)
         if not objPath: return False
-
-        retVal = True
-        if self.objType == 'model':
-            instance = nemoa.model.open(objName)
-        elif self.objType == 'dataset':
-            instance = nemoa.dataset.open(objName)
-        elif self.objType == 'network':
-            instance = nemoa.network.open(objName)
-        elif self.objType == 'system':
-            instance = nemoa.system.open(objName)
-        elif self.objType == 'script':
-            retVal &= self.loadFile(objPath)
+        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        if self.objType == 'script':
             instance = None
+            retVal = self.loadFile(objPath)
         else:
-            retVal = False
-        if not retVal: return False
+            instance = nemoa.open(self.objType, objName)
+            retVal = bool(instance)
+        QtGui.QApplication.restoreOverrideCursor()
+
+        if not retVal:
+            QtGui.QMessageBox.warning(self, "MDI",
+                "Cannot open %s '%s':\n%s." % (
+                self.getType(), objName, '2Do: nemoa error message'))
+            return False
 
         self.objName = objName
         self.objPath = objPath
         self.objInstance = instance
+
+        self.isUntitled = False
+        self.setModified(False)
+        self.updateWindowTitle()
+
         return True
 
     def getType(self):
@@ -81,89 +82,55 @@ class Editor(QtGui.QMainWindow):
         return self.objInstance.path \
             if self.objInstance else self.objPath
 
-    def loadFile(self, fileName):
-        file = QtCore.QFile(fileName)
-        if not file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text):
-            QtGui.QMessageBox.warning(self, "MDI",
-                "Cannot read file %s:\n%s." % (
-                fileName, file.errorString()))
-            return False
-
-        instr = QtCore.QTextStream(file)
-        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.textArea.setPlainText(instr.readAll())
-        QtGui.QApplication.restoreOverrideCursor()
-
-        self.setCurrentFile(fileName)
-
-        self.textArea.document().contentsChanged.connect(
-            self.documentWasModified)
-
-        return True
+    def getTitle(self):
+        path = self.getPath()
+        if path: return QtCore.QFileInfo(path).fileName()
+        return 'untitled'
 
     def save(self):
-        if self.isUntitled:
-            return self.saveAs()
-        else:
-            return self.saveFile(self.objPath)
+        if self.isUntitled: return self.saveAs()
+        return self.saveFile(self.getPath())
 
     def saveAs(self):
         fileName, filtr = QtGui.QFileDialog.getSaveFileName(
             self, "Save As", self.objPath)
-        if not fileName:
-            return False
-
+        if not fileName: return False
+        #2do: change name of object
         return self.saveFile(fileName)
 
-    def saveFile(self, fileName):
-        file = QtCore.QFile(fileName)
-
-        if not file.open(QtCore.QFile.WriteOnly | QtCore.QFile.Text):
-            QtGui.QMessageBox.warning(self, "MDI",
-                "Cannot write file %s:\n%s." % (fileName,
-                file.errorString()))
-            return False
-
-        outstr = QtCore.QTextStream(file)
-        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        outstr << self.textArea.toPlainText()
-        QtGui.QApplication.restoreOverrideCursor()
-
-        self.setCurrentFile(fileName)
-        return True
-
-    def userFriendlyCurrentFile(self):
-        return self.strippedName(self.objPath)
+    def saveFile(self, *args, **kwargs):
+        if self.objInstance.save(*args, **kwargs):
+            self.isUntitled = False
+            self.updateWindowTitle()
+            return True
+        return False
 
     def closeEvent(self, event):
-        if self.maybeSave():
-            event.accept()
-        else:
-            event.ignore()
+        if self.maybeSave(): event.accept()
+        else: event.ignore()
 
     def documentWasModified(self):
-        self.setWindowModified(self.textArea.document().isModified())
+        self.setWindowModified(self.getModified())
+
+    def getModified(self):
+        return False
+
+    def setModified(self, value):
+        pass
 
     def maybeSave(self):
-        if self.textArea.document().isModified():
+        if self.getModified():
             ret = QtGui.QMessageBox.warning(self, "MDI",
                 "'%s' has been modified.\nDo you want to save your "
-                "changes?" % self.userFriendlyCurrentFile(),
+                "changes?" % self.getTitle(),
                 QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard |
                 QtGui.QMessageBox.Cancel)
             if ret == QtGui.QMessageBox.Save:
                 return self.save()
             elif ret == QtGui.QMessageBox.Cancel:
                 return False
-
         return True
 
-    def setCurrentFile(self, fileName):
-        self.objPath = QtCore.QFileInfo(fileName).canonicalFilePath()
-        self.isUntitled = False
-        self.textArea.document().setModified(False)
+    def updateWindowTitle(self):
+        self.setWindowTitle(self.getTitle() + "[*]")
         self.setWindowModified(False)
-        self.setWindowTitle(self.userFriendlyCurrentFile() + "[*]")
-
-    def strippedName(self, fullFileName):
-        return QtCore.QFileInfo(fullFileName).fileName()

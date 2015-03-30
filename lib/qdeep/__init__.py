@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""QDeep - QT based graphical user interface for nemoa."""
+"""QT based graphical user interface for nemoa."""
 
 __version__     = '0.1.3'
 __status__      = 'Development'
@@ -17,6 +17,7 @@ import qdeep.common
 import nemoa
 from PySide import QtGui, QtCore
 import sys
+import pyqtgraph.console
 
 class MainWindow(QtGui.QMainWindow):
 
@@ -32,7 +33,8 @@ class MainWindow(QtGui.QMainWindow):
         self.mdiArea.setViewMode(QtGui.QMdiArea.TabbedView)
         self.mdiArea.setTabsClosable(True)
         self.mdiArea.setTabsMovable(True)
-        self.mdiArea.setObjectName("mdiArea")
+        #self.mdiArea.setObjectName("mdiArea")
+        self.mdiArea.setAcceptDrops(True)
         self.setCentralWidget(self.mdiArea)
 
         self.createActions()
@@ -84,7 +86,7 @@ class MainWindow(QtGui.QMainWindow):
         aversion = __version__
         acopyright = __copyright__
         adesc = __doc__
-        acredits = __credits__
+        acredits = ', '.join(__credits__)
         alicense = __license__
 
         return (
@@ -119,34 +121,52 @@ class MainWindow(QtGui.QMainWindow):
         self.updateChangeWorkspace()
 
     def createActions(self):
+
+        # project
         self.actNewProject = QtGui.QAction(
             qdeep.common.getIcon('actions', 'window-new.png'),
-            "&New Project", self,
-            shortcut = "Ctrl+N",
-            statusTip = "Create a new workspace",
+            "New Project", self,
+            statusTip = "Create a new project",
             triggered = self.newWorkspace)
         self.actOpenProject = QtGui.QAction(
             qdeep.common.getIcon('actions', 'project-open.png'),
-            '&Open Poject', self,
-            shortcut = "Ctrl+O",
+            'Open Poject', self,
             statusTip = "Open an existing project",
             triggered = self.openWorkspace)
         self.actSaveProject = QtGui.QAction(
             qdeep.common.getIcon('actions', 'document-save-all.png'),
-            '&Save Project', self,
-            shortcut = "Ctrl+S",
-            statusTip = "Save current workspace to disk",
+            'Save Project', self,
+            statusTip = "Save all files of current project to disk",
             triggered = self.saveWorkspace)
         self.actCloseProject = QtGui.QAction(
             qdeep.common.getIcon('actions', 'project-development-close.png'),
             "Close Project", self,
-            shortcut = "Ctrl+W",
             statusTip = "Close current project",
             triggered = self.closeWorkspace)
+
+        # files
+        self.actNewFile= QtGui.QAction(
+            qdeep.common.getIcon('actions', 'document-new.png'),
+            "&New", self,
+            shortcut = "Ctrl+N",
+            statusTip = "Create a new file",
+            triggered = self.newFile)
+        self.actOpenFile = QtGui.QAction(
+            qdeep.common.getIcon('actions', 'document-open.png'),
+            '&Open', self,
+            shortcut = "Ctrl+O",
+            statusTip = "Open an existing file",
+            triggered = self.openFile)
+        self.actSaveFile = QtGui.QAction(
+            qdeep.common.getIcon('actions', 'document-save.png'),
+            '&Save', self,
+            shortcut = "Ctrl+S",
+            statusTip = "Save current file to disk",
+            triggered = self.saveFile)
         self.actSaveAsFile = QtGui.QAction(
             qdeep.common.getIcon('actions', 'document-save-as.png'),
             'Save as...', self,
-            statusTip = "Save current workspace in new directory",
+            statusTip = "Save current file to disk",
             triggered = self.saveWorkspaceAs)
         self.actPrintFile = QtGui.QAction(
             qdeep.common.getIcon('actions', 'document-print.png'),
@@ -189,19 +209,6 @@ class MainWindow(QtGui.QMainWindow):
         self.treeWidget.itemDoubleClicked.connect(
             self.openObjectFromObjectsDock)
         self.treeWidget.setIconSize(QtCore.QSize(22, 22))
-        #self.button1 = QtGui.QPushButton('Show')
-        #self.button1.clicked.connect(self.doShowObject)
-
-        #stylesheet = \
-            #".QPushButton {\n" \
-            #+ "border: none;\n" \
-            #+ "background: none;\n" \
-            #+ "}"
-
-        #self.button1.setIcon(QtGui.QIcon(":/images/nemoa_logo.png"))
-        #self.button1.setIconSize(QtCore.QSize(16, 16))
-        #self.button1.setStyleSheet(stylesheet)
-
         self.btEdit = QtGui.QPushButton("Edit")
         self.btEdit.clicked.connect(self.openObjectFromObjectsDock)
         self.btNew = QtGui.QPushButton("New")
@@ -221,51 +228,64 @@ class MainWindow(QtGui.QMainWindow):
         widget.setLayout(grid)
         dock.setWidget(widget)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
-        self.viewMenu.addAction(dock.toggleViewAction())
+        self.mbarView.addAction(dock.toggleViewAction())
+        self.dockObjects = dock
 
     def createDockTools(self):
 
         dock = QtGui.QDockWidget("Tools", self)
         dock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea \
             | QtCore.Qt.RightDockWidgetArea)
-        self.dockDatasetList = QtGui.QListWidget(dock)
-        self.dockDatasetList.setDragEnabled(True)
-        #self.dockDatasetList.setAcceptDrops(True)
-        self.dockDatasetList.setIconSize(QtCore.QSize(32, 32))
-        self.dockDatasetList.setAlternatingRowColors(True)
-        dock.setWidget(self.dockDatasetList)
+
+        #self.dockTools = pyqtgraph.console.ConsoleWidget(dock)
+        widget = QtGui.QListWidget(dock)
+        widget.setDragEnabled(True)
+        widget.setAlternatingRowColors(True)
+        dock.setWidget(widget)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
-        self.viewMenu.addAction(dock.toggleViewAction())
+        self.mbarView.addAction(dock.toggleViewAction())
+        self.dockTools = dock
 
     def createMenus(self):
-        self.fileMenu = self.menuBar().addMenu("&File")
-        self.projectMenu = self.fileMenu.addMenu("&Projects")
-        self.projectMenu.addAction(self.actNewProject)
-        self.projectMenu.addAction(self.actOpenProject)
-        self.projectMenu.addAction(self.actSaveProject)
-        self.projectMenu.addAction(self.actCloseProject)
-        self.fileMenu.addSeparator()
-        self.fileMenu.addAction(self.actSaveAsFile)
-        self.fileMenu.addAction(self.actPrintFile)
-        self.fileMenu.addSeparator()
-        self.fileMenu.addAction(self.actExit)
-        self.viewMenu = self.menuBar().addMenu("&View")
-        self.viewToolbarsMenu = self.viewMenu.addMenu("&Toolbars")
-        self.aboutMenu = self.menuBar().addMenu("&Help")
-        self.aboutMenu.addAction(self.actAboutQDeep)
-        self.aboutMenu.addAction(self.actAboutNemoa)
+
+        self.mbarFile = self.menuBar().addMenu("&File")
+        self.mbarFilePrj = self.mbarFile.addMenu("&Projects")
+        self.mbarFilePrj.addAction(self.actNewProject)
+        self.mbarFilePrj.addAction(self.actOpenProject)
+        self.mbarFilePrj.addAction(self.actSaveProject)
+        self.mbarFilePrj.addAction(self.actCloseProject)
+        self.mbarFile.addSeparator()
+        self.mbarFile.addAction(self.actNewFile)
+        self.mbarFile.addAction(self.actOpenFile)
+        self.mbarFile.addAction(self.actSaveFile)
+        self.mbarFile.addAction(self.actSaveAsFile)
+        self.mbarFile.addSeparator()
+        self.mbarFile.addAction(self.actPrintFile)
+        self.mbarFile.addSeparator()
+        self.mbarFile.addAction(self.actExit)
+
+        if len(self.mdiArea.subWindowList()):
+            self.objectMenu = self.menuBar().addMenu("&Object")
+
+        self.mbarView = self.menuBar().addMenu("&View")
+        self.mbarViewTbar = self.mbarView.addMenu("&Toolbars")
+
+        self.mbarAbout = self.menuBar().addMenu("&Help")
+        self.mbarAbout.addAction(self.actAboutQDeep)
+        self.mbarAbout.addAction(self.actAboutNemoa)
 
     def createStatusBar(self):
         self.statusBar().showMessage("Ready")
 
     def createToolBars(self):
-        self.fileToolBar = self.addToolBar("Project")
-        self.fileToolBar.addAction(self.actNewProject)
-        self.fileToolBar.addAction(self.actOpenProject)
-        self.fileToolBar.addAction(self.actSaveProject)
-        self.fileToolBar.addAction(self.actCloseProject)
-        self.viewToolbarsMenu.addAction(self.fileToolBar.toggleViewAction())
 
+        self.tbarPrj = self.addToolBar("Project")
+        self.tbarPrj.addAction(self.actNewProject)
+        self.tbarPrj.addAction(self.actOpenProject)
+        self.tbarPrj.addAction(self.actSaveProject)
+        self.tbarPrj.addAction(self.actCloseProject)
+        self.mbarViewTbar.addAction(
+            self.tbarPrj.toggleViewAction())
 
         #self.editToolBar = self.addToolBar("Edit")
         #self.editToolBar.addAction(self.cutAct)
@@ -292,6 +312,7 @@ class MainWindow(QtGui.QMainWindow):
         else:
             return None
 
+        child.setAcceptDrops(True)
         self.mdiArea.addSubWindow(child)
 
         #child.copyAvailable.connect(self.cutAct.setEnabled)
@@ -357,6 +378,27 @@ class MainWindow(QtGui.QMainWindow):
         qsettings.endGroup()
         qsettings.endGroup()
 
+        # section 'tbarprj'
+        self.settings['tbarprj'] = {}
+        qsettings.beginGroup('tbarprj')
+        self.settings['tbarprj']['visible'] = \
+            qsettings.value("visible", False) in ['true', 'True', True]
+        qsettings.endGroup()
+
+        # section 'dockobjects'
+        self.settings['dockobjects'] = {}
+        qsettings.beginGroup('dockobjects')
+        self.settings['dockobjects']['visible'] = \
+            qsettings.value("visible", True) in ['true', 'True', True]
+        qsettings.endGroup()
+
+        # section 'docktools'
+        self.settings['docktools'] = {}
+        qsettings.beginGroup('docktools')
+        self.settings['docktools']['visible'] = \
+            qsettings.value("visible", True) in ['true', 'True', True]
+        qsettings.endGroup()
+
         workspace = qsettings.value("workspace", None) or None
         base = qsettings.value("base", None) or None
 
@@ -364,15 +406,11 @@ class MainWindow(QtGui.QMainWindow):
             nemoa.open(workspace, base = base)
 
     def applySettings(self):
-        self.updateMainWindowFromSettings()
         self.updateChangeWorkspace()
-        self.updateMdiAreaFromSettings()
 
-    def updateMainWindowFromSettings(self):
         self.resize(self.settings['mainwindow']['size'])
         self.move(self.settings['mainwindow']['pos'])
 
-    def updateMdiAreaFromSettings(self):
         if 'child' in self.settings['mdiarea']:
             childList = self.settings['mdiarea']['child']
             for childType, childName in childList:
@@ -380,6 +418,13 @@ class MainWindow(QtGui.QMainWindow):
         if 'active' in self.settings['mdiarea']:
             actType, actName = self.settings['mdiarea']['active']
             self.openObject(actType, actName)
+
+        self.tbarPrj.setVisible(
+            self.settings['tbarprj']['visible'])
+        self.dockObjects.setVisible(
+            self.settings['dockobjects']['visible'])
+        self.dockTools.setVisible(
+            self.settings['docktools']['visible'])
 
     def writeSettings(self):
         qsettings = QtCore.QSettings()
@@ -403,6 +448,18 @@ class MainWindow(QtGui.QMainWindow):
         qsettings.beginGroup('mainwindow')
         qsettings.setValue("pos", self.pos())
         qsettings.setValue("size", self.size())
+        qsettings.endGroup()
+
+        qsettings.beginGroup('tbarprj')
+        qsettings.setValue("visible", self.tbarPrj.isVisible())
+        qsettings.endGroup()
+
+        qsettings.beginGroup('docktools')
+        qsettings.setValue("visible", self.dockTools.isVisible())
+        qsettings.endGroup()
+
+        qsettings.beginGroup('dockobjects')
+        qsettings.setValue("visible", self.dockObjects.isVisible())
         qsettings.endGroup()
 
         qsettings.setValue("workspace", nemoa.get('workspace'))
@@ -483,7 +540,6 @@ class MainWindow(QtGui.QMainWindow):
                 return
             child = self.createMdiChild(type = (objType, 'editor'))
             if child.openFromWorkspace(objName):
-            #if child.loadFile(objPath):
                 self.statusBar().showMessage("File loaded", 2000)
                 child.show()
             else:
@@ -492,21 +548,27 @@ class MainWindow(QtGui.QMainWindow):
         return False
 
     def findMdiChild(self, objType, objName):
-        #canonicalFilePath = QtCore.QFileInfo(fileName).canonicalFilePath()
-
         windows = self.mdiArea.subWindowList()
         for window in windows:
             child = window.widget()
             if not child.getType() == objType: continue
             if not child.getName() == objName: continue
             return window
-
         return None
 
     def printFile(self):
         return True
 
     def newWorkspace(self):
+        return True
+
+    def newFile(self):
+        return True
+
+    def openFile(self):
+        return True
+
+    def saveFile(self):
         return True
 
     def save(self):
