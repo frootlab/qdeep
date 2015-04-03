@@ -43,7 +43,7 @@ class Editor(qdeep.objects.common.Editor):
     def getModified(self):
         return self.textArea.document().isModified()
 
-    def setModified(self, value):
+    def setModified(self, value = True):
         self.textArea.document().setModified(value)
 
     def loadFile(self, fileName):

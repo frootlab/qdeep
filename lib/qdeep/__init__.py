@@ -137,7 +137,7 @@ class MainWindow(QtGui.QMainWindow):
             qdeep.common.getIcon('actions', 'document-save-all.png'),
             'Save Project', self,
             statusTip = "Save all files of current project to disk",
-            triggered = self.saveWorkspace)
+            triggered = self.saveProject)
         self.actCloseProject = QtGui.QAction(
             qdeep.common.getIcon('actions', 'project-development-close.png'),
             "Close Project", self,
@@ -162,12 +162,12 @@ class MainWindow(QtGui.QMainWindow):
             '&Save', self,
             shortcut = "Ctrl+S",
             statusTip = "Save current file to disk",
-            triggered = self.saveFile)
+            triggered = self.save)
         self.actSaveAsFile = QtGui.QAction(
             qdeep.common.getIcon('actions', 'document-save-as.png'),
             'Save as...', self,
             statusTip = "Save current file to disk",
-            triggered = self.saveWorkspaceAs)
+            triggered = self.saveAs)
         self.actPrintFile = QtGui.QAction(
             qdeep.common.getIcon('actions', 'document-print.png'),
             "&Print", self,
@@ -291,34 +291,6 @@ class MainWindow(QtGui.QMainWindow):
         #self.editToolBar.addAction(self.cutAct)
         #self.editToolBar.addAction(self.copyAct)
         #self.editToolBar.addAction(self.pasteAct)
-
-    def createMdiChild(self, type):
-
-        if type == ('script', 'editor'):
-            from qdeep.objects.script import Editor
-            child = Editor()
-        elif type == ('dataset', 'editor'):
-            from qdeep.objects.dataset import Editor
-            child = Editor()
-        elif type == ('model', 'editor'):
-            from qdeep.objects.model import Editor
-            child = Editor()
-        elif type == ('network', 'editor'):
-            from qdeep.objects.network import Editor
-            child = Editor()
-        elif type == ('system', 'editor'):
-            from qdeep.objects.system import Editor
-            child = Editor()
-        else:
-            return None
-
-        child.setAcceptDrops(True)
-        self.mdiArea.addSubWindow(child)
-
-        #child.copyAvailable.connect(self.cutAct.setEnabled)
-        #child.copyAvailable.connect(self.copyAct.setEnabled)
-
-        return child
 
     def documentWasModified(self):
         modified = True
@@ -547,6 +519,45 @@ class MainWindow(QtGui.QMainWindow):
             return True
         return False
 
+    def saveProject(self):
+        return True
+
+    def saveProjectAs(self):
+        return True
+
+    #
+    # MDI
+    #
+
+    def createMdiChild(self, type):
+
+        if type == ('script', 'editor'):
+            from qdeep.objects.script import Editor
+            child = Editor()
+        elif type == ('dataset', 'editor'):
+            from qdeep.objects.dataset import Editor
+            child = Editor()
+        elif type == ('model', 'editor'):
+            from qdeep.objects.model import Editor
+            child = Editor()
+        elif type == ('network', 'editor'):
+            from qdeep.objects.network import Editor
+            child = Editor()
+        elif type == ('system', 'editor'):
+            from qdeep.objects.system import Editor
+            child = Editor()
+        else:
+            return None
+
+        child.setAcceptDrops(True)
+        self.mdiArea.addSubWindow(child)
+
+        #child.copyAvailable.connect(self.cutAct.setEnabled)
+        #child.copyAvailable.connect(self.copyAct.setEnabled)
+
+        return child
+
+
     def findMdiChild(self, objType, objName):
         windows = self.mdiArea.subWindowList()
         for window in windows:
@@ -554,6 +565,12 @@ class MainWindow(QtGui.QMainWindow):
             if not child.getType() == objType: continue
             if not child.getName() == objName: continue
             return window
+        return None
+
+    def getActiveMdiChild(self):
+        activeSubWindow = self.mdiArea.activeSubWindow()
+        if activeSubWindow:
+            return activeSubWindow.widget()
         return None
 
     def printFile(self):
@@ -568,17 +585,21 @@ class MainWindow(QtGui.QMainWindow):
     def openFile(self):
         return True
 
-    def saveFile(self):
-        return True
-
     def save(self):
-        return self.saveWorkspace()
+        if self.getActiveMdiChild() \
+            and self.getActiveMdiChild().save():
+            self.statusBar().showMessage("File saved", 2000)
 
-    def saveWorkspace(self):
-        return True
+    def saveAs(self):
+        if self.getActiveMdiChild() \
+            and self.mdiArea.activeMdiChild().saveAs():
+            self.statusBar().showMessage("File saved", 2000)
 
-    def saveWorkspaceAs(self):
-        return True
+    #def saveFile(self):
+        #return True
+
+    ##def save(self):
+        ##return self.saveWorkspace()
 
 def main():
     nemoa.set('mode', 'silent')

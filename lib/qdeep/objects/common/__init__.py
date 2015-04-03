@@ -12,6 +12,7 @@ class Editor(QtGui.QMainWindow):
     sequenceNumber = 1
     settings = None
     isUntitled = True
+    hasChanged = QtCore.Signal()
 
     objInstance = None
     objName = None
@@ -111,6 +112,7 @@ class Editor(QtGui.QMainWindow):
 
     def documentWasModified(self):
         self.setWindowModified(self.getModified())
+        self.hasChanged.emit()
 
     def getModified(self):
         return False
